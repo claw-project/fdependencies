@@ -1,5 +1,5 @@
 # fdependencies
-List dependency of FORTRAN program
+List dependencies of FORTRAN program
 
 ```
 ./generate_dep.py <source-directory> <start-file>
