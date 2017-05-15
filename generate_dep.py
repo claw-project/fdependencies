@@ -24,8 +24,8 @@ __date__ = 'Fri May 12 15:54:44 2017'
 __email__ = 'valentin.clement@env.ethz.ch'
 
 
+# Gather all use information from the file
 def gather_dependencies(fortran_input):
-    # open and parse file
     input_file = open(os.path.join(fortran_input), 'r')
     modules = []
     try:
@@ -37,6 +37,7 @@ def gather_dependencies(fortran_input):
         input_file.close()
 
 
+# Try to find the file containing the specified module
 def find_module_file(module_name, src_directory):
     mod_regex = '^ *MODULE *' + module_name
     mod_p = re.compile(mod_regex)
@@ -48,6 +49,7 @@ def find_module_file(module_name, src_directory):
                     return os.path.join(src_directory, input_file)
 
 
+# Recursive call to process all dependencies
 def find_all_dependencies(mods):
     for mod in mods:
         mod_file = find_module_file(mod, args.source)
