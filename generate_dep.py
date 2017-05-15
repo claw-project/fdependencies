@@ -57,7 +57,7 @@ def find_all_dependencies(mods):
                 if len(usages) > 0:
                     find_all_dependencies(usages)
                 processed_modules.append(mod)
-                print(mod_file)
+                print(os.path.basename(mod_file))
         else:
             print('Warning: no file found for module ' + mod, file=sys.stderr)
 
@@ -76,4 +76,4 @@ processed_modules = []
 start_modules = gather_dependencies(start_file)
 find_all_dependencies(start_modules)
 
-print(start_file)
+print(os.path.basename(start_file))
