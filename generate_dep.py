@@ -17,7 +17,7 @@ Generate list of all dependencies for a starting fortran file.
 
 # information
 __author__ = 'Valentin Clement'
-__copyright__ = 'Copyright 2015, C2SM/MeteoSwiss'
+__copyright__ = 'Copyright 2017, C2SM/MeteoSwiss'
 __license__ = 'GPL'
 __version__ = '0.1'
 __date__ = 'Fri May 12 15:54:44 2017'
