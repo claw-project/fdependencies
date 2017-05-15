@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import argparse
 import os
 import re
+import sys
 
 # This file is released under terms of BSD license`
 # See LICENSE.txt for more information
@@ -29,41 +31,49 @@ def gather_dependencies(fortran_input):
     try:
         for line in input_file:
             if use_p.match(line):
-                modules.append(mod_p.match(line).group(3))
+                modules.append(use_p.match(line).group(3))
         return modules
     finally:
         input_file.close()
 
 
-def get_module_name(fortran_input):
-    input_file = open(os.path.join(fortran_input), 'r')
-    for line in input_file:
-        if mod_p.match(line):
-
-
 def find_module_file(module_name, src_directory):
+    mod_regex = '^ *MODULE *' + module_name
+    mod_p = re.compile(mod_regex)
+    for input_file in os.listdir(src_directory):
+        if input_file.endswith(".f90"):
+            fortran_file = open(os.path.join(src_directory, input_file), 'r')
+            for line in fortran_file:
+                if mod_p.match(line):
+                    return os.path.join(src_directory, input_file)
 
 
-    for file in os.listdir(src_directory):
-        if file.endswith(".f90"):
-
+def find_all_dependencies(mods):
+    for mod in mods:
+        mod_file = find_module_file(mod, args.source)
+        if mod_file is not None:
+            if mod not in processed_modules:
+                usages = gather_dependencies(mod_file)
+                if len(usages) > 0:
+                    find_all_dependencies(usages)
+                processed_modules.append(mod)
+                print(mod_file)
+        else:
+            print('Warning: no file found for module ' + mod, file=sys.stderr)
 
 
 parser = argparse.ArgumentParser(description='FORTRAN dependencies scanner.')
 parser.add_argument('source', action='store', help='Directory containing the FORTRAN source files')
 parser.add_argument('start', action='store', help='Start file for the scanning')
-# parser.add_argument('', action='store', help='Output file')
 args = parser.parse_args()
 
 use_regex = '^ *(USE|use) +(, *INTRINSIC *::|, *intrinsic *::)? *([^,|^ |^!]*)'
 use_p = re.compile(use_regex)
 
-mod_regex = '^ *MODULE *$module_name'
-mod_p = re.compile(use_regex)
+start_file = os.path.join(args.source, args.start)
 
-start_file = args.source + args.start
+processed_modules = []
+start_modules = gather_dependencies(start_file)
+find_all_dependencies(start_modules)
 
-modules = gather_dependencies(start_file)
-
-for mod in modules:
-    print(mod)
+print(start_file)
