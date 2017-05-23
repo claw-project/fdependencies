@@ -70,7 +70,7 @@ def find_all_fortran_files(is_recusrive, src_directory):
     else:
         for input_file in os.listdir(src_directory):
             if input_file.endswith(".f90"):
-                fortran_files.append(input_file)
+                fortran_files.append(os.path.join(src_directory, input_file))
     return fortran_files
 
 
