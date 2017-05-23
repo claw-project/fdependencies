@@ -31,7 +31,7 @@ def gather_dependencies(fortran_input):
     try:
         for line in input_file:
             if use_p.match(line):
-                modules.append(use_p.match(line).group(3))
+                modules.append(use_p.match(line).group(3).lower())
         return modules
     finally:
         input_file.close()
@@ -40,7 +40,7 @@ def gather_dependencies(fortran_input):
 # Try to find the file containing the specified module
 def find_module_file(module_name, module_map):
     if module_name in module_map:
-        return module_map[module_name]
+        return module_map[module_name.lower()]
     return None
 
 
