@@ -30,7 +30,7 @@ def gather_dependencies(fortran_input):
     modules = []
     try:
         for line in input_file:
-            if use_p.match(line):
+            if use_p.match(line, re.IGNORECASE):
                 modules.append(use_p.match(line).group(3).lower())
         return modules
     finally:
