@@ -78,7 +78,7 @@ def find_all_fortran_files(is_recusrive, src_directory):
 def find_all_modules(fortran_files):
     mapping = dict()
     mod_generic_regex = '^ *MODULE * ([a-zA-Z0-9_]+)'
-    mod_generic_p = re.compile(mod_generic_regex)
+    mod_generic_p = re.compile(mod_generic_regex, re.IGNORECASE)
     for f90 in fortran_files:
         fortran_file = open(f90, 'r')
         for line in fortran_file:
