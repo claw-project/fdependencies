@@ -12,7 +12,7 @@ import sys
 """
 generate_dep.py
 
-Generate list of all dependencies for a starting fortran file. 
+Generate list of all dependencies for a starting fortran file.
 """
 
 # information
@@ -38,44 +38,72 @@ def gather_dependencies(fortran_input):
 
 
 # Try to find the file containing the specified module
-def find_module_file(module_name, src_directory):
-    mod_regex = '^ *MODULE *' + module_name
-    mod_p = re.compile(mod_regex)
-    for input_file in os.listdir(src_directory):
-        if input_file.endswith(".f90"):
-            fortran_file = open(os.path.join(src_directory, input_file), 'r')
-            for line in fortran_file:
-                if mod_p.match(line):
-                    return os.path.join(src_directory, input_file)
+def find_module_file(module_name, module_map):
+    if module_name in module_map:
+        return module_map[module_name]
+    return None
 
 
 # Recursive call to process all dependencies
-def find_all_dependencies(mods):
+def find_all_dependencies(mods, module_map, src_directory):
     for mod in mods:
-        mod_file = find_module_file(mod, args.source)
+        mod_file = find_module_file(mod, module_map)
         if mod_file is not None:
             if mod not in processed_modules:
                 usages = gather_dependencies(mod_file)
                 if len(usages) > 0:
-                    find_all_dependencies(usages)
+                    find_all_dependencies(usages, module_map, src_directory)
                 processed_modules.append(mod)
-                print(os.path.basename(mod_file))
+                print(mod_file.replace(src_directory, ''))
         else:
             print('Warning: no file found for module ' + mod, file=sys.stderr)
+
+
+# Gather all fortran files in the source directory. For the moment only .f90 files
+def find_all_fortran_files(is_recusrive, src_directory):
+    fortran_files = []
+    if is_recusrive:
+        for root, dirs, files in os.walk(src_directory):
+            for input_file in files:
+                if input_file.endswith('.f90'):
+                    fortran_files.append(root + '/' + input_file)
+    else:
+        for input_file in os.listdir(src_directory):
+            if input_file.endswith(".f90"):
+                fortran_files.append(input_file)
+    return fortran_files
+
+
+# Map module name with their corresponding files
+def find_all_modules(fortran_files):
+    mapping = dict()
+    mod_generic_regex = '^ *MODULE * ([a-zA-Z1-9_]+)'
+    mod_generic_p = re.compile(mod_generic_regex)
+    for f90 in fortran_files:
+        fortran_file = open(f90, 'r')
+        for line in fortran_file:
+            if mod_generic_p.match(line):
+                module_name = mod_generic_p.match(line).group(1)
+                mapping[module_name] = f90
+    return mapping
 
 
 parser = argparse.ArgumentParser(description='FORTRAN dependencies scanner.')
 parser.add_argument('source', action='store', help='Directory containing the FORTRAN source files')
 parser.add_argument('start', action='store', help='Start file for the scanning')
+parser.add_argument('--recursive', dest='recursive', action='store_true')
+parser.set_defaults(recursive=False)
 args = parser.parse_args()
 
 use_regex = '^ *(USE|use) +(, *INTRINSIC *::|, *intrinsic *::)? *([^,|^ |^!]*)'
 use_p = re.compile(use_regex)
 
 start_file = os.path.join(args.source, args.start)
+input_files = find_all_fortran_files(args.recursive, args.source)
+module_to_file = find_all_modules(input_files)
 
 processed_modules = []
 start_modules = gather_dependencies(start_file)
-find_all_dependencies(start_modules)
+find_all_dependencies(start_modules, module_to_file, args.source)
 
-print(os.path.basename(start_file))
+print(start_file.replace(args.source, ''))
