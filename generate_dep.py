@@ -31,7 +31,7 @@ def gather_dependencies(fortran_input):
     try:
         for line in input_file:
             if use_p.match(line):
-                modules.append(use_p.match(line).group(3).lower())
+                modules.append(use_p.match(line).group(2).lower())
         return modules
     finally:
         input_file.close()
@@ -56,7 +56,10 @@ def find_all_dependencies(mods, module_map, src_directory):
                 processed_modules.append(mod)
                 print(mod_file.replace(src_directory, ''))
         else:
-            print('Warning: no file found for module ' + mod, file=sys.stderr)
+            if mod in intrinsic_modules:
+                intrinsic_usage[mod] = intrinsic_usage[mod] + 1
+            else:
+                print('Warning: no file found for module ' + mod.rstrip(), file=sys.stderr)
 
 
 # Gather all fortran files in the source directory. For the moment only .f90 files
@@ -87,23 +90,45 @@ def find_all_modules(fortran_files):
                 mapping[module_name] = f90
     return mapping
 
-
-parser = argparse.ArgumentParser(description='FORTRAN dependencies scanner.')
+# Arguments of the program
+parser = argparse.ArgumentParser(description='FORTRAN dependency scanner.')
 parser.add_argument('source', action='store', help='Directory containing the FORTRAN source files')
 parser.add_argument('start', action='store', help='Start file for the scanning')
 parser.add_argument('--recursive', dest='recursive', action='store_true')
 parser.set_defaults(recursive=False)
 args = parser.parse_args()
 
-use_regex = '^ *(USE|use) +(, *INTRINSIC *::|, *intrinsic *::)? *([^,|^ |^!]*)'
+# List of FORTRAN intrinsic modules
+intrinsic_modules = ['iso_c_binding', 'iso_fortran_env', 'openacc', 'omp_lib', 'omp_lib_kinds']
+intrinsic_usage = dict()
+for intrinsic_module in intrinsic_modules:
+    intrinsic_usage[intrinsic_module] = 0
+
+# Regex to catch the module names in use statements
+use_regex = '^ *USE *(, *INTRINSIC *::)? *([^,|^ |^!]*)'
 use_p = re.compile(use_regex)
 
+# Format the entry point
 start_file = os.path.join(args.source, args.start)
+
+# Find all the FORTRAN file in the search path
 input_files = find_all_fortran_files(args.recursive, args.source)
+
+# Process all module files once to extract their module
 module_to_file = find_all_modules(input_files)
 
+# Keep list of processed modules to avoid processing them more than once
 processed_modules = []
+
+# Start the dependency search from the given entry point (file containing the PROGRAM subroutine)
 start_modules = gather_dependencies(start_file)
 find_all_dependencies(start_modules, module_to_file, args.source)
 
+# Print the entry point as the last file in the dependency list
 print(start_file.replace(args.source, ''))
+
+# Print intrinsic module usage
+for intrinsic_module in intrinsic_modules:
+    if intrinsic_usage[intrinsic_module] > 0:
+        print('Info: intrinsic module ' + intrinsic_module + ' used ' + str(intrinsic_usage[intrinsic_module])
+              + ' times', file=sys.stderr)
