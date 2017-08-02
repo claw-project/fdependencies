@@ -57,6 +57,7 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
                 if len(usages) > 0:
                     find_all_dependencies(usages, module_map, src_directory, excluded)
                 processed_modules.append(mod)
+                processed_module_files.append(mod_file)
                 print(mod_file.replace(src_directory, ''))
         else:
             if mod in intrinsic_modules:
@@ -131,6 +132,7 @@ module_to_file = find_all_modules(input_files)
 
 # Keep list of processed modules to avoid processing them more than once
 processed_modules = []
+processed_module_files = []
 
 # Start the dependency search from the given entry point (file containing the PROGRAM subroutine)
 start_modules = gather_dependencies(start_file)
@@ -138,12 +140,7 @@ find_all_dependencies(start_modules, module_to_file, args.source, excluded_files
 
 # Print the entry point as the last file in the dependency list
 print(start_file.replace(args.source, ''))
-
-# Check files that have not been processed
-processed_module_files = [start_file.replace(args.source, '')]
-for processed_module in processed_modules:
-    module_file = find_module_file(processed_module, module_to_file)
-    processed_module_files.append(module_file)
+processed_module_files.append(start_file)
 
 # Check module that have not been processed to have all .xmod
 for k in module_to_file:
@@ -155,6 +152,9 @@ for k in module_to_file:
         for key in module_to_file:
             if module_file in module_to_file[key]:
                 processed_modules.append(key)
+                if module_to_file[key] not in processed_module_files:
+                    processed_module_files.append(module_to_file[key])
+
 
 # Process rest of files that are not excluded
 for input_file in input_files:
