@@ -24,6 +24,12 @@ __date__ = 'Fri May 12 15:54:44 2017'
 __email__ = 'valentin.clement@env.ethz.ch'
 
 
+def add_fortran_file_to_parse(fortran_file, src_directory):
+    if fortran_file not in processed_module_files:
+        print(fortran_file.replace(src_directory, ''))
+        processed_module_files.append(fortran_file)
+
+
 # Gather all use information from the file
 def gather_dependencies(fortran_input):
     input_file = open(os.path.join(fortran_input), 'r')
@@ -62,13 +68,13 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
                     find_all_dependencies(usages, module_map, src_directory, excluded)
                 # Add module name as processed
                 processed_modules.append(mod)
-                print(mod_file.replace(src_directory, ''))
+
+                add_fortran_file_to_parse(mod_file, src_directory)
+
                 # Add file as processed
                 for module_name in module_map:
                     if module_map[module_name] == mod_file and module_name != mod:
                         processed_modules.append(module_name)
-                if mod_file not in processed_module_files:
-                    processed_module_files.append(mod_file)
         else:
             if mod in intrinsic_modules:
                 intrinsic_usage[mod] = intrinsic_usage[mod] + 1
@@ -143,15 +149,15 @@ module_to_file = find_all_modules(input_files)
 # Keep list of processed modules to avoid processing them more than once
 processed_modules = []
 processed_module_files = []
+for excluded_fortran_file in excluded_files:
+    processed_module_files.append(os.path.join(args.source, excluded_fortran_file))
 
 # Start the dependency search from the given entry point (file containing the PROGRAM subroutine)
 start_modules = gather_dependencies(start_file)
 find_all_dependencies(start_modules, module_to_file, args.source, excluded_files)
 
 # Print the entry point as the last file in the dependency list
-print(start_file.replace(args.source, ''))
-if start_file not in processed_module_files:
-    processed_module_files.append(start_file)
+add_fortran_file_to_parse(start_file, args.source)
 
 # Check module that have not been processed to have all .xmod
 for possible_module_name in module_to_file:
@@ -161,20 +167,18 @@ for possible_module_name in module_to_file:
         if len(start_modules) > 0:
             find_all_dependencies(start_modules, module_to_file, args.source, excluded_files)
         else:
-            print(module_file)
+            add_fortran_file_to_parse(module_to_file[possible_module_name], args.source)
         processed_modules.append(module_to_file)
         for module_name in module_to_file:
             if module_to_file[module_name] == module_file and module_name != possible_module_name:
                 processed_modules.append(module_name)
-        if module_to_file[possible_module_name] not in processed_module_files:
-            processed_module_files.append(module_to_file[possible_module_name])
+        add_fortran_file_to_parse(module_to_file[possible_module_name], args.source)
 
 
 # Process rest of files that are not excluded
 for input_file in input_files:
     if input_file not in processed_module_files and input_file.replace(args.source, '') not in excluded_files:
-        processed_module_files.append(input_file)
-        print (input_file.replace(args.source, ''))
+        add_fortran_file_to_parse(input_file, args.source)
 
 # Print intrinsic module usage
 for intrinsic_module in intrinsic_modules:
