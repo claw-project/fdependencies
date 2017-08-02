@@ -31,7 +31,7 @@ def gather_dependencies(fortran_input):
     try:
         for line in input_file:
             if use_p.match(line):
-                modules.append(use_p.match(line).group(2).lower().decode('string_escape'))
+                modules.append(use_p.match(line).group(2).lower().rstrip())
         return list(set(modules))
     finally:
         input_file.close()
@@ -54,11 +54,21 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
                 if mod in usages:
                     print('Warning: Module ' + mod + ' use itself!', file=sys.stderr)
                     usages.remove(mod)
+                    # Remove module that are part of this file as well
+                    for key_module_name in usages:
+                        if key_module_name in module_map and module_map[key_module_name] == mod_file:
+                            usages.remove(key_module_name)
                 if len(usages) > 0:
                     find_all_dependencies(usages, module_map, src_directory, excluded)
+                # Add module name as processed
                 processed_modules.append(mod)
-                processed_module_files.append(mod_file)
                 print(mod_file.replace(src_directory, ''))
+                # Add file as processed
+                for module_name in module_map:
+                    if module_map[module_name] == mod_file and module_name != mod:
+                        processed_modules.append(module_name)
+                if mod_file not in processed_module_files:
+                    processed_module_files.append(mod_file)
         else:
             if mod in intrinsic_modules:
                 intrinsic_usage[mod] = intrinsic_usage[mod] + 1
@@ -90,7 +100,7 @@ def find_all_modules(fortran_files):
         fortran_file = open(f90, 'r')
         for line in fortran_file:
             if mod_generic_p.match(line):
-                module_name = mod_generic_p.match(line).group(1)
+                module_name = mod_generic_p.match(line).group(1).rstrip()
                 if module_name.lower() != 'procedure':
                     mapping[module_name] = f90
     return mapping
@@ -108,7 +118,7 @@ parser.set_defaults(exclude_list='')
 args = parser.parse_args()
 
 # List of FORTRAN intrinsic modules
-intrinsic_modules = ['iso_c_binding', 'iso_fortran_env', 'openacc', 'omp_lib', 'omp_lib_kinds']
+intrinsic_modules = ['iso_c_binding', 'iso_fortran_env', 'openacc', 'omp_lib', 'omp_lib_kinds', 'ieee_arithmetic']
 fortran_ext = ['f90', 'F90', '.for', '.f', '.F', '.f95', '.f03']
 intrinsic_usage = dict()
 for intrinsic_module in intrinsic_modules:
@@ -140,25 +150,30 @@ find_all_dependencies(start_modules, module_to_file, args.source, excluded_files
 
 # Print the entry point as the last file in the dependency list
 print(start_file.replace(args.source, ''))
-processed_module_files.append(start_file)
+if start_file not in processed_module_files:
+    processed_module_files.append(start_file)
 
 # Check module that have not been processed to have all .xmod
-for k in module_to_file:
-    module_file = module_to_file[k].replace(args.source, '')
-    if k not in processed_modules and module_file not in excluded_files:
-        start_modules = gather_dependencies(module_to_file[k])
-        find_all_dependencies(start_modules, module_to_file, args.source, excluded_files)
-        processed_modules.append(k)
-        for key in module_to_file:
-            if module_file in module_to_file[key]:
-                processed_modules.append(key)
-                if module_to_file[key] not in processed_module_files:
-                    processed_module_files.append(module_to_file[key])
+for possible_module_name in module_to_file:
+    module_file = module_to_file[possible_module_name].replace(args.source, '')
+    if possible_module_name not in processed_modules and module_file not in excluded_files:
+        start_modules = gather_dependencies(module_to_file[possible_module_name])
+        if len(start_modules) > 0:
+            find_all_dependencies(start_modules, module_to_file, args.source, excluded_files)
+        else:
+            print(module_file)
+        processed_modules.append(module_to_file)
+        for module_name in module_to_file:
+            if module_to_file[module_name] == module_file and module_name != possible_module_name:
+                processed_modules.append(module_name)
+        if module_to_file[possible_module_name] not in processed_module_files:
+            processed_module_files.append(module_to_file[possible_module_name])
 
 
 # Process rest of files that are not excluded
 for input_file in input_files:
     if input_file not in processed_module_files and input_file.replace(args.source, '') not in excluded_files:
+        processed_module_files.append(input_file)
         print (input_file.replace(args.source, ''))
 
 # Print intrinsic module usage
