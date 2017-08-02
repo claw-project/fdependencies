@@ -101,7 +101,7 @@ parser.add_argument('source', action='store', help='Directory containing the FOR
 parser.add_argument('start', action='store', help='Start file for the scanning')
 parser.add_argument('--recursive', dest='recursive', action='store_true', help='Recurse to child folders')
 parser.add_argument('--exclude', dest='exclude_list', action='store',
-                    help='List of file to be excluded seperated by a semi-colon')
+                    help='List of file to be excluded seperated by a colon :')
 parser.set_defaults(recursive=False)
 parser.set_defaults(exclude_list='')
 args = parser.parse_args()
@@ -114,7 +114,7 @@ for intrinsic_module in intrinsic_modules:
     intrinsic_usage[intrinsic_module] = 0
 
 # all excluded files
-excluded_files = args.exclude_list.split(';')
+excluded_files = args.exclude_list.split(':')
 
 # Regex to catch the module names in use statements
 use_regex = '^ *USE *(, *INTRINSIC *::)? *([^,|^ |^!]*)'
