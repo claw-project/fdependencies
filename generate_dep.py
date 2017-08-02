@@ -52,7 +52,7 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
             if mod not in processed_modules:
                 usages = gather_dependencies(mod_file)
                 if mod in usages:
-                    print('Warning: Module ' + mod + ' use itself!')
+                    print('Warning: Module ' + mod + ' use itself!', file=sys.stderr)
                     usages.remove(mod)
                 if len(usages) > 0:
                     find_all_dependencies(usages, module_map, src_directory, excluded)
