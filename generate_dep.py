@@ -118,7 +118,7 @@ excluded_files = args.exclude_list.split(':')
 
 # Regex to catch the module names in use statements
 use_regex = '^ *USE *(, *INTRINSIC *::)? *([^,|^ |^!]*)'
-use_p = re.compile(use_regex)
+use_p = re.compile(use_regex, re.IGNORECASE)
 
 # Format the entry point
 start_file = os.path.join(args.source, args.start)
