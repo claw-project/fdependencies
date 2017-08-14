@@ -57,13 +57,24 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
         if mod_file is not None and mod_file.replace(src_directory, '') not in excluded:
             if mod not in processed_modules:
                 usages = gather_dependencies(mod_file)
+
+                # Clean up USE statement. All modules defined in the same file are considered as internal usage and
+                # does not need to be handled.
+                tmp_to_remove = []
+                for key_module_name in usages:
+                    if key_module_name in module_map and module_map[key_module_name] == mod_file:
+                        tmp_to_remove.append(key_module_name)
+                    if key_module_name in intrinsic_modules:
+                        intrinsic_usage[key_module_name] = intrinsic_usage[key_module_name] + 1
+                        tmp_to_remove.append(key_module_name)
+                for tmp in tmp_to_remove:
+                    usages.remove(tmp)
+
                 if mod in usages:
                     print('Warning: Module ' + mod + ' use itself! Or is declared in the same file!', file=sys.stderr)
                     usages.remove(mod)
-                    # Remove module that are part of this file as well
-                    for key_module_name in usages:
-                        if key_module_name in module_map and module_map[key_module_name] == mod_file:
-                            usages.remove(key_module_name)
+
+                # If there is at least one dependencies, try to solve it.
                 if len(usages) > 0:
                     find_all_dependencies(usages, module_map, src_directory, excluded)
 
