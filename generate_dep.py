@@ -18,7 +18,7 @@ Generate list of all dependencies for a starting fortran file.
 # information
 __author__ = 'Valentin Clement'
 __copyright__ = 'Copyright 2017, C2SM/MeteoSwiss'
-__license__ = 'GPL'
+__license__ = 'BSD-2'
 __version__ = '0.1'
 __date__ = 'Fri May 12 15:54:44 2017'
 __email__ = 'valentin.clement@env.ethz.ch'
@@ -58,7 +58,7 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
             if mod not in processed_modules:
                 usages = gather_dependencies(mod_file)
                 if mod in usages:
-                    print('Warning: Module ' + mod + ' use itself!', file=sys.stderr)
+                    print('Warning: Module ' + mod + ' use itself! Or is declared in the same file!', file=sys.stderr)
                     usages.remove(mod)
                     # Remove module that are part of this file as well
                     for key_module_name in usages:
@@ -66,6 +66,7 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
                             usages.remove(key_module_name)
                 if len(usages) > 0:
                     find_all_dependencies(usages, module_map, src_directory, excluded)
+
                 # Add module name as processed
                 processed_modules.append(mod)
 
