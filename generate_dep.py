@@ -32,21 +32,21 @@ def add_fortran_file_to_parse(fortran_file, src_directory):
 
 # Gather all use information from the file
 def gather_dependencies(fortran_input):
-    input_file = open(os.path.join(fortran_input), 'r')
+    fortran_input_file = open(os.path.join(fortran_input), 'r')
     modules = []
     try:
-        for line in input_file:
+        for line in fortran_input_file:
             if use_p.match(line):
                 modules.append(use_p.match(line).group(2).lower().rstrip())
         return list(set(modules))
     finally:
-        input_file.close()
+        fortran_input_file.close()
 
 
 # Try to find the file containing the specified module
-def find_module_file(module_name, module_map):
-    if module_name in module_map:
-        return module_map[module_name.lower()]
+def find_module_file(fortran_module_name, module_map):
+    if fortran_module_name.lower() in module_map:
+        return module_map[fortran_module_name.lower()]
     return None
 
 
@@ -84,9 +84,9 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
                 add_fortran_file_to_parse(mod_file, src_directory)
 
                 # Add file as processed
-                for module_name in module_map:
-                    if module_map[module_name] == mod_file and module_name != mod:
-                        processed_modules.append(module_name)
+                for fortran_module_name in module_map:
+                    if module_map[fortran_module_name] == mod_file and fortran_module_name != mod:
+                        processed_modules.append(fortran_module_name)
         else:
             if mod in intrinsic_modules:
                 intrinsic_usage[mod] = intrinsic_usage[mod] + 1
@@ -99,13 +99,13 @@ def find_all_fortran_files(is_recursive, src_directory):
     fortran_files = []
     if is_recursive:
         for root, dirs, files in os.walk(src_directory):
-            for input_file in files:
-                if input_file.endswith('.f90'):
-                    fortran_files.append(root + '/' + input_file)
+            for fortran_input_file in files:
+                if fortran_input_file.endswith('.f90'):
+                    fortran_files.append(root + '/' + fortran_input_file)
     else:
-        for input_file in os.listdir(src_directory):
-            if input_file.endswith(".f90"):
-                fortran_files.append(os.path.join(src_directory, input_file))
+        for fortran_input_file in os.listdir(src_directory):
+            if fortran_input_file.endswith(".f90"):
+                fortran_files.append(os.path.join(src_directory, fortran_input_file))
     return fortran_files
 
 
@@ -118,9 +118,9 @@ def find_all_modules(fortran_files):
         fortran_file = open(f90, 'r')
         for line in fortran_file:
             if mod_generic_p.match(line):
-                module_name = mod_generic_p.match(line).group(1).rstrip()
-                if module_name.lower() != 'procedure':
-                    mapping[module_name] = f90
+                fortran_module_name = mod_generic_p.match(line).group(1).rstrip()
+                if fortran_module_name.lower() != 'procedure':
+                    mapping[fortran_module_name.lower()] = f90
     return mapping
 
 
