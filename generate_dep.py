@@ -124,8 +124,12 @@ parser.set_defaults(exclude_list='')
 args = parser.parse_args()
 
 # List of FORTRAN intrinsic modules
-intrinsic_modules = ['iso_c_binding', 'iso_fortran_env', 'openacc', 'omp_lib', 'omp_lib_kinds', 'ieee_arithmetic']
+intrinsic_modules = ['iso_c_binding', 'iso_fortran_env', 'openacc', 'omp_lib', 'omp_lib_kinds', 'ieee_arithmetic',
+                     'ieee_features', 'ieee_exceptions']
+
+# List of FORTRAN extension
 fortran_ext = ['f90', 'F90', '.for', '.f', '.F', '.f95', '.f03']
+
 intrinsic_usage = dict()
 for intrinsic_module in intrinsic_modules:
     intrinsic_usage[intrinsic_module] = 0
