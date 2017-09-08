@@ -100,11 +100,11 @@ def find_all_fortran_files(is_recursive, src_directory):
     if is_recursive:
         for root, dirs, files in os.walk(src_directory):
             for fortran_input_file in files:
-                if fortran_input_file.endswith('.f90'):
+                if fortran_input_file.endswith(('f90', 'F90', '.for', '.f', '.F', '.f95', '.f03')):
                     fortran_files.append(root + '/' + fortran_input_file)
     else:
         for fortran_input_file in os.listdir(src_directory):
-            if fortran_input_file.endswith(".f90"):
+            if fortran_input_file.endswith(('f90', 'F90', '.for', '.f', '.F', '.f95', '.f03')):
                 fortran_files.append(os.path.join(src_directory, fortran_input_file))
     return fortran_files
 
@@ -120,6 +120,8 @@ def find_all_modules(fortran_files):
             if mod_generic_p.match(line):
                 fortran_module_name = mod_generic_p.match(line).group(1).rstrip()
                 if fortran_module_name.lower() != 'procedure':
+
+
                     mapping[fortran_module_name.lower()] = f90
     return mapping
 
