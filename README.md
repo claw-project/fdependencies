@@ -2,5 +2,16 @@
 List dependencies of FORTRAN program
 
 ```
-./generate_dep.py [--recursive] [--exclude file1:file2] <source-directory> <start-file>
+usage: generate_dep.py [-h] [--recursive] [--exclude EXCLUDE_LIST] source start
+
+FORTRAN dependency scanner.
+
+positional arguments:
+  source                 Directory containing the FORTRAN source files
+  start                  Start file for the scanning
+
+optional arguments:
+  -h, --help             show this help message and exit
+  --recursive            Recurse to child folders
+  --exclude EXCLUDE_LIST List of file to be excluded seperated by a colon :
 ```
