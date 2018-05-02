@@ -1,5 +1,5 @@
 # fdependencies
-List dependencies of FORTRAN program
+List dependencies of Fortran program
 
 ```
 usage: generate_dep.py [-h] [--recursive] [--exclude EXCLUDE_LIST] source start
