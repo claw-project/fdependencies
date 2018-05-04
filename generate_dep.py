@@ -99,7 +99,7 @@ def find_all_fortran_files(is_recursive, src_directory, excluded_dirs):
     fortran_files = []
     if is_recursive:
         for root, dirs, files in os.walk(src_directory):
-            if not excluded_dirs in root:
+            if len(excluded_dirs) == 0 or not excluded_dirs in root:
                 for fortran_input_file in files:
                     if fortran_input_file.endswith(('f90', 'F90', '.for', '.f', '.F', '.f95', '.f03')):
                         fortran_files.append(root + '/' + fortran_input_file)
