@@ -95,13 +95,14 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
 
 
 # Gather all fortran files in the source directory. For the moment only .f90 files
-def find_all_fortran_files(is_recursive, src_directory):
+def find_all_fortran_files(is_recursive, src_directory, excluded_dirs):
     fortran_files = []
     if is_recursive:
         for root, dirs, files in os.walk(src_directory):
-            for fortran_input_file in files:
-                if fortran_input_file.endswith(('f90', 'F90', '.for', '.f', '.F', '.f95', '.f03')):
-                    fortran_files.append(root + '/' + fortran_input_file)
+            if not excluded_dirs in root:
+                for fortran_input_file in files:
+                    if fortran_input_file.endswith(('f90', 'F90', '.for', '.f', '.F', '.f95', '.f03')):
+                        fortran_files.append(root + '/' + fortran_input_file)
     else:
         for fortran_input_file in os.listdir(src_directory):
             if fortran_input_file.endswith(('f90', 'F90', '.for', '.f', '.F', '.f95', '.f03')):
@@ -120,8 +121,6 @@ def find_all_modules(fortran_files):
             if mod_generic_p.match(line):
                 fortran_module_name = mod_generic_p.match(line).group(1).rstrip()
                 if fortran_module_name.lower() != 'procedure':
-
-
                     mapping[fortran_module_name.lower()] = f90
     return mapping
 
@@ -133,8 +132,14 @@ parser.add_argument('start', action='store', help='Start file for the scanning')
 parser.add_argument('--recursive', dest='recursive', action='store_true', help='Recurse to child folders')
 parser.add_argument('--exclude', dest='exclude_list', action='store',
                     help='List of file to be excluded seperated by a colon :')
+parser.add_argument('--exclude-dir', dest='exclude_dir', action='store',
+                    help='Directory to be excluded')
+parser.add_argument('--stop-after-start', dest='stop_main', action='store_true',
+                    help='Stop after reaching dependency for the start file')
 parser.set_defaults(recursive=False)
+parser.set_defaults(stop_main=False)
 parser.set_defaults(exclude_list='')
+parser.set_defaults(exclude_dir=[])
 args = parser.parse_args()
 
 # List of FORTRAN intrinsic modules
@@ -159,7 +164,7 @@ use_p = re.compile(use_regex, re.IGNORECASE)
 start_file = os.path.join(args.source, args.start)
 
 # Find all the FORTRAN file in the search path
-input_files = find_all_fortran_files(args.recursive, args.source)
+input_files = find_all_fortran_files(args.recursive, args.source, args.exclude_dir)
 
 # Process all module files once to extract their module
 module_to_file = find_all_modules(input_files)
@@ -178,25 +183,25 @@ find_all_dependencies(start_modules, module_to_file, args.source, excluded_files
 add_fortran_file_to_parse(start_file, args.source)
 
 # Check module that have not been processed to have all .xmod
-for possible_module_name in module_to_file:
-    module_file = module_to_file[possible_module_name].replace(args.source, '')
-    if possible_module_name not in processed_modules and module_file not in excluded_files:
-        start_modules = gather_dependencies(module_to_file[possible_module_name])
-        if len(start_modules) > 0:
-            find_all_dependencies(start_modules, module_to_file, args.source, excluded_files)
-        else:
+if not args.stop_main:
+    for possible_module_name in module_to_file:
+        module_file = module_to_file[possible_module_name].replace(args.source, '')
+        if possible_module_name not in processed_modules and module_file not in excluded_files:
+            start_modules = gather_dependencies(module_to_file[possible_module_name])
+            if len(start_modules) > 0:
+                find_all_dependencies(start_modules, module_to_file, args.source, excluded_files)
+            else:
+                add_fortran_file_to_parse(module_to_file[possible_module_name], args.source)
+            processed_modules.append(module_to_file)
+            for module_name in module_to_file:
+                if module_to_file[module_name] == module_file and module_name != possible_module_name:
+                    processed_modules.append(module_name)
             add_fortran_file_to_parse(module_to_file[possible_module_name], args.source)
-        processed_modules.append(module_to_file)
-        for module_name in module_to_file:
-            if module_to_file[module_name] == module_file and module_name != possible_module_name:
-                processed_modules.append(module_name)
-        add_fortran_file_to_parse(module_to_file[possible_module_name], args.source)
 
-
-# Process rest of files that are not excluded
-for input_file in input_files:
-    if input_file not in processed_module_files and input_file.replace(args.source, '') not in excluded_files:
-        add_fortran_file_to_parse(input_file, args.source)
+    # Process rest of files that are not excluded
+    for input_file in input_files:
+        if input_file not in processed_module_files and input_file.replace(args.source, '') not in excluded_files:
+            add_fortran_file_to_parse(input_file, args.source)
 
 # Print intrinsic module usage
 for intrinsic_module in intrinsic_modules:
