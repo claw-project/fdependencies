@@ -11,7 +11,9 @@ positional arguments:
   start                  Start file for the scanning
 
 optional arguments:
-  -h, --help             show this help message and exit
-  --recursive            Recurse to child folders
-  --exclude EXCLUDE_LIST List of file to be excluded seperated by a colon :
+  -h, --help                show this help message and exit
+  --recursive               Recurse to child folders
+  --exclude EXCLUDE_LIST    List of file to be excluded separated by a colon :
+  --exclude-dir EXCLUDE_DIR Directory to be excluded
+  --stop-after-start        Stop after reaching dependency for the start file
 ```

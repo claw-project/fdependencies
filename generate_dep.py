@@ -131,7 +131,7 @@ parser.add_argument('source', action='store', help='Directory containing the FOR
 parser.add_argument('start', action='store', help='Start file for the scanning')
 parser.add_argument('--recursive', dest='recursive', action='store_true', help='Recurse to child folders')
 parser.add_argument('--exclude', dest='exclude_list', action='store',
-                    help='List of file to be excluded seperated by a colon :')
+                    help='List of file to be excluded separated by a colon :')
 parser.add_argument('--exclude-dir', dest='exclude_dir', action='store',
                     help='Directory to be excluded')
 parser.add_argument('--stop-after-start', dest='stop_main', action='store_true',
