@@ -109,9 +109,11 @@ def find_all_fortran_files(is_recursive, src_directory, excluded_dirs):
                 fortran_files.append(os.path.join(src_directory, fortran_input_file))
     return fortran_files
 
+def is_excluded(f90, src_directory, excluded):
+    return f90 in [src_directory + s for s in excluded]
 
 # Map module name with their corresponding files
-def find_all_modules(fortran_files):
+def find_all_modules(fortran_files, src_directory, excluded):
     mapping = dict()
     mod_generic_regex = '^ *MODULE * ([a-zA-Z0-9_]+)'
     mod_generic_p = re.compile(mod_generic_regex, re.IGNORECASE)
@@ -120,7 +122,7 @@ def find_all_modules(fortran_files):
         for line in fortran_file:
             if mod_generic_p.match(line):
                 fortran_module_name = mod_generic_p.match(line).group(1).rstrip()
-                if fortran_module_name.lower() != 'procedure':
+                if fortran_module_name.lower() != 'procedure' and not is_excluded(f90, src_directory, excluded):
                     mapping[fortran_module_name.lower()] = f90
     return mapping
 
@@ -167,7 +169,7 @@ start_file = os.path.join(args.source, args.start)
 input_files = find_all_fortran_files(args.recursive, args.source, args.exclude_dir)
 
 # Process all module files once to extract their module
-module_to_file = find_all_modules(input_files)
+module_to_file = find_all_modules(input_files, args.source, excluded_files)
 
 # Keep list of processed modules to avoid processing them more than once
 processed_modules = []
