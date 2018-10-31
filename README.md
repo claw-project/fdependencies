@@ -1,6 +1,8 @@
 # fdependencies
 List dependencies of Fortran program
 
+[![Build Status](https://travis-ci.org/claw-project/fdependencies.svg?branch=master)](https://travis-ci.org/claw-project/fdependencies)
+
 ```
 usage: generate_dep.py [-h] [--recursive] [--exclude EXCLUDE_LIST] source start
 
