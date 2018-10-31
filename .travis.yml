@@ -5,6 +5,8 @@ dist: trusty
 
 python:
   - "2.7"
+install:
+  - "pip install flake8"
 
 script:
   - flake8 generate_dep.py
