@@ -95,11 +95,11 @@ def find_all_dependencies(mods, module_map, src_directory, excluded):
 
 
 # Gather all fortran files in the source directory. For the moment only .f90 files
-def find_all_fortran_files(is_recursive, src_directory, excluded_dirs):
+def find_all_fortran_files(is_recursive, src_directory, excluded_directories):
     fortran_files = []
     if is_recursive:
         for root, dirs, files in os.walk(src_directory):
-            if len(excluded_dirs) == 0 or not excluded_dirs in root:
+            if len(excluded_directories) == 0 or not any(ex_dir in root for ex_dir in excluded_directories):
                 for fortran_input_file in files:
                     if fortran_input_file.endswith(('f90', 'F90', '.for', '.f', '.F', '.f95', '.f03')):
                         fortran_files.append(root + '/' + fortran_input_file)
@@ -135,7 +135,7 @@ parser.add_argument('--recursive', dest='recursive', action='store_true', help='
 parser.add_argument('--exclude', dest='exclude_list', action='store',
                     help='List of file to be excluded separated by a colon :')
 parser.add_argument('--exclude-dir', dest='exclude_dir', action='store',
-                    help='Directory to be excluded')
+                    help='Directory to be excluded separated by a colon :')
 parser.add_argument('--stop-after-start', dest='stop_main', action='store_true',
                     help='Stop after reaching dependency for the start file')
 parser.set_defaults(recursive=False)
@@ -157,6 +157,7 @@ for intrinsic_module in intrinsic_modules:
 
 # all excluded files
 excluded_files = args.exclude_list.split(':')
+excluded_directories = args.exclude_dir.split(':')
 
 # Regex to catch the module names in use statements
 use_regex = '^ *USE *(, *INTRINSIC *::)? *([^,|^ |^!]*)'
@@ -166,7 +167,7 @@ use_p = re.compile(use_regex, re.IGNORECASE)
 start_file = os.path.join(args.source, args.start)
 
 # Find all the FORTRAN file in the search path
-input_files = find_all_fortran_files(args.recursive, args.source, args.exclude_dir)
+input_files = find_all_fortran_files(args.recursive, args.source, excluded_directories)
 
 # Process all module files once to extract their module
 module_to_file = find_all_modules(input_files, args.source, excluded_files)
