@@ -164,7 +164,7 @@ parser.add_argument('--stop-after-start', dest='stop_main',
 parser.set_defaults(recursive=False)
 parser.set_defaults(stop_main=False)
 parser.set_defaults(exclude_list='')
-parser.set_defaults(exclude_dir=[])
+parser.set_defaults(exclude_dir='')
 args = parser.parse_args()
 
 # List of FORTRAN intrinsic modules
