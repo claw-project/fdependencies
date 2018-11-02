@@ -163,8 +163,8 @@ parser.add_argument('--stop-after-start', dest='stop_main',
                     help='Stop after reaching dependency for the start file')
 parser.set_defaults(recursive=False)
 parser.set_defaults(stop_main=False)
-parser.set_defaults(exclude_list='')
-parser.set_defaults(exclude_dir='')
+parser.set_defaults(exclude_list=None)
+parser.set_defaults(exclude_dir=None)
 args = parser.parse_args()
 
 # List of FORTRAN intrinsic modules
@@ -180,8 +180,17 @@ for intrinsic_module in intrinsic_modules:
     intrinsic_usage[intrinsic_module] = 0
 
 # all excluded files
-excluded_files = args.exclude_list.split(':')
-excluded_directories = args.exclude_dir.split(':')
+if args.exclude_list is None:
+    excluded_files = []
+else:
+    excluded_files = args.exclude_list.split(':')
+
+
+# All excluded directory
+if args.exclude_dir is None:
+    excluded_directories = []
+else:
+    excluded_directories = args.exclude_dir.split(':')
 
 # Regex to catch the module names in use statements
 use_regex = '^ *USE *(, *INTRINSIC *::)? *([^,|^ |^!]*)'
