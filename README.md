@@ -6,10 +6,10 @@ List dependencies of Fortran program
 ```
 usage: generate_dep.py [-h] [--recursive] [--exclude EXCLUDE_LIST] source start
 
-FORTRAN dependency scanner.
+Fortran dependency scanner.
 
 positional arguments:
-  source                 Directory containing the FORTRAN source files
+  source                 Directory containing the Fortran source files
   start                  Start file for the scanning
 
 optional arguments:
